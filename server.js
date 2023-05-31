@@ -6,6 +6,10 @@ const mongoose = require('mongoose');
 const adsRoutes = require('./routes/ads.routes');
 const usersRoutes = require('./routes/users.routes');
 const authRoutes = require('./routes/auth.routes');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
+const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
 app.use(
@@ -22,6 +26,27 @@ app.use(
 
 app.use(express.json());
 
+if (process.env.NODE_ENV !== 'production') {
+  app.use(
+    cors({
+      origin: ['http://localhost:3000'],
+      credentials: true,
+    })
+  );
+}
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    cookie: {
+      secure: process.env.NODE_ENV == 'production',
+    },
+    store: MongoStore.create({ mongoUrl: 'mongodb://localhost:27017/noticeboard' }),
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+
 app.use('/api/', adsRoutes);
 app.use('/api/', usersRoutes);
 app.use('/auth/', authRoutes);
@@ -36,7 +61,7 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Not found...' });
 });
 
-mongoose.connect('mongodb://localhost:27017/noticeboard', {
+mongoose.connect('mongodb://localhost:27017/noticeboardnoticeboard', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
